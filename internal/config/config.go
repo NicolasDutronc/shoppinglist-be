@@ -55,15 +55,15 @@ type Config struct {
 // NewConfig reads the given configuration file and the environment and returns a newly created Config
 // An error is returned if a field was not found in the configuration (file or env)
 func NewConfig(filepath string) (*Config, error) {
-	v := viper.New()
-	v.SetConfigFile(filepath)
-	v.AutomaticEnv()
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	if err := v.ReadInConfig(); err != nil {
+	viper.SetConfigFile(filepath)
+	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
 
-	v = v.Sub("app")
+	v := viper.Sub("app")
+	v.SetEnvPrefix("APP")
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	t := reflect.TypeOf(Config{})
 	for i := 0; i != t.NumField(); i++ {
