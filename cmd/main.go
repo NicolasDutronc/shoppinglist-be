@@ -90,7 +90,7 @@ func main() {
 	// start server
 	go func() {
 		log.Printf("Listening on %s:%s", conf.Server.Hostname, conf.Server.Port)
-		if err := server.ListenAndServeTLS(conf.Server.ServerCRT, conf.Server.ServerKey); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error : %s", err)
 		}
 	}()
