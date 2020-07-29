@@ -15,7 +15,7 @@
 # vendor/
 
 # services data
-services_data
+./build/services_data
 
 # certs
-server*
+./server*
