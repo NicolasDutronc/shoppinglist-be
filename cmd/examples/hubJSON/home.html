@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SSE</title>
+
+    <script>
+      if (window.fetch) {
+        function connect() {
+          console.log("connecting...");
+
+          myHeaders = new Headers();
+          myHeaders.append("Processor-ID", "browser");
+          myHeaders.append("Accept", "application/json");
+
+          var reader = null;
+          fetch("https://localhost:8080/connect", {
+            headers: myHeaders,
+          })
+            .then(function (resp) {
+              reader = resp.body.getReader();
+
+              return new Promise(function (resolve, reject) {
+                var readNextChunk = function () {
+                  reader
+                    .read()
+                    .then(function (result) {
+                      if (result.done) {
+                        resolve(undefined);
+                      } else {
+                        handleMessage(
+                          JSON.parse(new TextDecoder().decode(result.value))
+                        );
+                        readNextChunk();
+                      }
+                    })
+                    .catch((err) => {
+                      console.log("err : ", err);
+                      reject(err);
+                    });
+                };
+                readNextChunk();
+              });
+            })
+            .catch((err) => console.log("err connect : ", err));
+        }
+
+        function handleMessage(msg) {
+          console.log(msg);
+        }
+
+        function subscribe() {
+          fetch("https://localhost:8080/subscribe", {
+            method: "POST",
+            body: JSON.stringify({
+              topic: "1",
+              processor: "browser",
+            }),
+          })
+            .then((resp) => resp.json())
+            .then((json) => console.log(json))
+            .catch((err) => console.log("err subscribe : ", err));
+        }
+
+        function unsubscribe() {
+          fetch("https://localhost:8080/unsubscribe", {
+            method: "POST",
+            body: JSON.stringify({
+              topic: "1",
+              processor: "browser",
+            }),
+          })
+            .then((resp) => resp.json())
+            .then((json) => console.log(json))
+            .catch((err) => console.log("err subscribe : ", err));
+        }
+      } else {
+        console.log("no fetch in this window");
+      }
+    </script>
+  </head>
+
+  <body>
+    <div>Test SSE</div>
+    <button onclick="connect()">Connect</button>
+    <button onclick="subscribe()">Subscribe</button>
+    <button onclick="unsubscribe()">Unsubscribe</button>
+  </body>
+</html>
