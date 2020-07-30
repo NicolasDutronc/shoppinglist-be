@@ -96,7 +96,11 @@ func main() {
 	// setup routes
 	r := api.SetupRoutes(userSrv, listSrv, h)
 	r.Use(func(c *gin.Context) {
-		c.Redirect(http.StatusPermanentRedirect, "https://"+c.Request.URL.Hostname()+"/"+c.Request.URL.Path)
+		if c.Request.URL.Scheme != "https" {
+			c.Redirect(http.StatusPermanentRedirect, "https://"+c.Request.URL.Hostname()+"/"+c.Request.URL.Path)
+		} else {
+			c.Next()
+		}
 	})
 	r.StaticFile("/", "./public/index.html")
 
