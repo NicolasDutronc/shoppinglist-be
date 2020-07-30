@@ -94,6 +94,7 @@ func main() {
 
 	// setup routes
 	r := api.SetupRoutes(userSrv, listSrv, h)
+	r.StaticFile("/", "./public/index.html")
 
 	// setup server
 	server := &http.Server{
