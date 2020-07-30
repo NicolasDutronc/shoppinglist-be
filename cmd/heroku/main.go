@@ -13,7 +13,6 @@ import (
 	"github.com/NicolasDutronc/shoppinglist-be/internal/list"
 	"github.com/NicolasDutronc/shoppinglist-be/internal/user"
 	"github.com/NicolasDutronc/shoppinglist-be/pkg/hub"
-	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -95,13 +94,6 @@ func main() {
 
 	// setup routes
 	r := api.SetupRoutes(userSrv, listSrv, h)
-	r.Use(func(c *gin.Context) {
-		if c.Request.URL.Scheme != "https" {
-			c.Redirect(http.StatusPermanentRedirect, "https://"+c.Request.URL.Hostname()+"/"+c.Request.URL.Path)
-		} else {
-			c.Next()
-		}
-	})
 	r.StaticFile("/", "./public/index.html")
 
 	// setup server
