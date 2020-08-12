@@ -59,18 +59,27 @@ func FindAllListsHandler(srv list.Finder) gin.HandlerFunc {
 			return
 		}
 
+		// get current user
+		currentUser, err := GetCurrentUser(c)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		}
+
 		response := &response{
 			Lists: []*encodedList{},
 		}
 
 		for _, list := range lists {
-			response.Lists = append(response.Lists, &encodedList{
-				ID:        list.ID.Hex(),
-				CreatedAt: list.CreatedAt,
-				UpdatedAt: list.UpdatedAt,
-				Name:      list.Name,
-				Items:     list.Items,
-			})
+			// if the user has the permission, the list is appended
+			if err := currentUser.Can("read", "list-"+list.ID.Hex()); err == nil {
+				response.Lists = append(response.Lists, &encodedList{
+					ID:        list.ID.Hex(),
+					CreatedAt: list.CreatedAt,
+					UpdatedAt: list.UpdatedAt,
+					Name:      list.Name,
+					Items:     list.Items,
+				})
+			}
 		}
 
 		c.JSON(http.StatusOK, response)
