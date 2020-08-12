@@ -28,6 +28,12 @@ func GetSeeders() []*mongomigrate.Seeder {
 						UpdatedAt: time.Now(),
 					},
 					Name: "admin",
+					Permissions: []*user.Permission{
+						{
+							Action:     "*",
+							ResourceID: "*",
+						},
+					},
 				}
 
 				fmt.Println("Please enter a password for admin")
