@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/NicolasDutronc/shoppinglist-be/internal/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -48,22 +47,14 @@ func (r *MongoDBRepository) FindByName(ctx context.Context, userName string) (*U
 }
 
 // Store creates a new user and stores it
-func (r *MongoDBRepository) Store(ctx context.Context, name string, password string) (*User, error) {
-	user := User{
-		BaseModel: common.BaseModel{
-			ID:        primitive.NewObjectID(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		Name:     name,
-		Password: password,
-	}
+func (r *MongoDBRepository) Store(ctx context.Context, name string, password string, permissions ...*Permission) (*User, error) {
+	user := NewUser(name, password, permissions...)
 
-	if _, err := r.UserCollection.InsertOne(ctx, user); err != nil {
+	if _, err := r.UserCollection.InsertOne(ctx, *user); err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return user, nil
 
 }
 

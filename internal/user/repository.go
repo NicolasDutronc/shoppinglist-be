@@ -14,7 +14,7 @@ type FinderByName interface {
 
 // Storer is a single method interface for storing a user in the database
 type Storer interface {
-	Store(ctx context.Context, name string, password string) (*User, error)
+	Store(ctx context.Context, name string, password string, permissions ...*Permission) (*User, error)
 }
 
 // NameUpdater is a single method interface for updating the name field of the user given by its id

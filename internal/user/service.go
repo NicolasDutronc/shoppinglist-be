@@ -51,13 +51,13 @@ func (s *ServiceImpl) FindByName(ctx context.Context, userName string) (*User, e
 }
 
 // Store hashes the password and then calls the repository
-func (s *ServiceImpl) Store(ctx context.Context, name string, password string) (*User, error) {
+func (s *ServiceImpl) Store(ctx context.Context, name string, password string, permissions ...*Permission) (*User, error) {
 	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.repo.Store(ctx, name, string(encryptedPassword))
+	return s.repo.Store(ctx, name, string(encryptedPassword), permissions...)
 }
 
 // UpdateName directly calls the repository
