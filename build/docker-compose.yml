@@ -49,5 +49,3 @@ services:
       APP_DATABASE_NAME: shoplist
       APP_DATABASE_LIST_COLLECTION: lists
       APP_DATABASE_USER_COLLECTION: users
-      SERVER_CRT: /server.crt
-      SERVER_KEY: /server.key

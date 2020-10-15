@@ -11,7 +11,7 @@ RUN go build -o app ./cmd/main.go && chmod +x app
 FROM scratch
 
 COPY --from=builder /app/src/app /app
-COPY --from=builder /app/src/server.crt /server.crt
-COPY --from=builder /app/src/server.key /server.key
+COPY --from=builder /app/src/config.yml /config.yml
+COPY --from=builder /app/src/public/index.html /public/index.html
 
 CMD [ "/app" ]
