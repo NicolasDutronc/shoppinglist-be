@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/NicolasDutronc/autokey"
-	"github.com/NicolasDutronc/shoppinglist-be/internal/common"
 	"github.com/NicolasDutronc/shoppinglist-be/internal/user"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,15 +23,13 @@ type UserServiceTestSuite struct {
 }
 
 func (s *UserServiceTestSuite) SetupTest() {
-	s.u = &user.User{
-		BaseModel: common.BaseModel{
-			ID:        primitive.NewObjectID(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		Name:     "dummy",
-		Password: "1234",
-	}
+	s.u = user.NewUser("dummy", "1234", &user.Permission{
+		Action:     "someAction",
+		ResourceID: "resourceID",
+	}, &user.Permission{
+		Action:     "otherAction",
+		ResourceID: "otherResourceID",
+	})
 	s.repo = &user.MockRepository{}
 	s.consumer = &autokey.MockConsumer{}
 	s.srv = user.NewService(s.repo, s.consumer).(*user.ServiceImpl)
@@ -62,18 +58,19 @@ func (s *UserServiceTestSuite) TestFindByName() {
 func (s *UserServiceTestSuite) TestStore() {
 	ctx := context.Background()
 
-	s.repo.On("Store", ctx, s.u.Name, mock.AnythingOfType("string")).Return(
-		func(_ context.Context, _ string, arg string) *user.User {
+	s.repo.On("Store", ctx, s.u.Name, mock.AnythingOfType("string"), s.u.Permissions[0], s.u.Permissions[1]).Return(
+		func(_ context.Context, _ string, arg string, _ ...*user.Permission) *user.User {
 			return &user.User{
-				BaseModel: s.u.BaseModel,
-				Name:      s.u.Name,
-				Password:  arg,
+				BaseModel:   s.u.BaseModel,
+				Name:        s.u.Name,
+				Password:    arg,
+				Permissions: s.u.Permissions,
 			}
 		},
 		nil,
 	)
 
-	user, err := s.srv.Store(ctx, s.u.Name, s.u.Password)
+	user, err := s.srv.Store(ctx, s.u.Name, s.u.Password, s.u.Permissions...)
 	assert.NoError(s.T(), err)
 
 	assert.NoError(s.T(), bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(s.u.Password)))

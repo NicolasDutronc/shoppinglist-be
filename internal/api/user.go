@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -187,6 +188,36 @@ func AuthenticateMiddleware(srv user.AuthenticateService) gin.HandlerFunc {
 		}
 
 		c.Set("currentUser", user)
+
+		c.Next()
+	}
+}
+
+// AuthorizationMiddleware is an authorization middleware to add in the handler chain of each handler with the correct permission configuration
+func AuthorizationMiddleware(action string, resourceID string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// rebuild action and resourceID based on dynamic params
+		for _, param := range c.Params {
+			if strings.Contains(resourceID, fmt.Sprintf(":%s", param.Key)) {
+				resourceID = strings.Replace(resourceID, fmt.Sprintf(":%s", param.Key), param.Value, 1)
+			}
+			if strings.Contains(action, fmt.Sprintf(":%s", param.Key)) {
+				action = strings.Replace(action, fmt.Sprintf(":%s", param.Key), param.Value, 1)
+			}
+		}
+
+		// retrieve the current user
+		currentUser, err := GetCurrentUser(c)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		// check if the user has the permission
+		if err := currentUser.Can(action, resourceID); err != nil {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
 
 		c.Next()
 	}
