@@ -24,7 +24,7 @@ type NameUpdater interface {
 
 // PasswordUpdater is a single method interface for updating the password field of a user
 type PasswordUpdater interface {
-	UpdatePassword(ctx context.Context, userID string, currentPassword string, newPassword string) (int64, error)
+	UpdatePassword(ctx context.Context, userID string, newPassword string) (int64, error)
 }
 
 // Deleter is a single method interface for deleting a user from the database

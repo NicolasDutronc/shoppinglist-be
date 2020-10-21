@@ -9,23 +9,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// LoginService defines the login interface
-type LoginService interface {
-	Login(ctx context.Context, userName string, password string) (*User, string, error)
-}
-
-// AuthenticateService defines the authenticate interface
-type AuthenticateService interface {
-	Authenticate(ctx context.Context, token string) (*User, error)
-}
-
-// Service defines the user service
-type Service interface {
-	Repository
-	LoginService
-	AuthenticateService
-}
-
 // ServiceImpl is the concrete implementation of the user service interface
 type ServiceImpl struct {
 	repo        Repository
@@ -81,7 +64,7 @@ func (s *ServiceImpl) UpdatePassword(ctx context.Context, userID string, current
 		return -1, err
 	}
 
-	return s.repo.UpdatePassword(ctx, userID, currentPassword, string(encryptedPassword))
+	return s.repo.UpdatePassword(ctx, userID, string(encryptedPassword))
 }
 
 // Delete directly calls the repository

@@ -82,7 +82,7 @@ func (r *MongoDBRepository) UpdateName(ctx context.Context, userID string, newNa
 }
 
 // UpdatePassword updates the password
-func (r *MongoDBRepository) UpdatePassword(ctx context.Context, userID string, currentPassword string, newPassword string) (int64, error) {
+func (r *MongoDBRepository) UpdatePassword(ctx context.Context, userID string, newPassword string) (int64, error) {
 	objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return -1, err

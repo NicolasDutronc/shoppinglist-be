@@ -119,15 +119,15 @@ func (s *UserServiceTestSuite) TestUpdatePassword() {
 			return nil
 		},
 	).Times(3)
-	s.repo.On("UpdatePassword", ctx, s.u.ID.Hex(), s.u.Password, mock.AnythingOfType("string")).Return(
-		func(_ context.Context, _ string, _ string, newPasswordHashed string) int64 {
+	s.repo.On("UpdatePassword", ctx, s.u.ID.Hex(), mock.AnythingOfType("string")).Return(
+		func(_ context.Context, _ string, newPasswordHashed string) int64 {
 			if err := bcrypt.CompareHashAndPassword([]byte(newPasswordHashed), []byte(newPassword)); err != nil {
 				return -1
 			}
 
 			return 1
 		},
-		func(_ context.Context, _ string, _ string, newPasswordHashed string) error {
+		func(_ context.Context, _ string, newPasswordHashed string) error {
 			if err := bcrypt.CompareHashAndPassword([]byte(newPasswordHashed), []byte(newPassword)); err != nil {
 				return err
 			}

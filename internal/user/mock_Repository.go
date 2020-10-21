@@ -131,20 +131,20 @@ func (_m *MockRepository) UpdateName(ctx context.Context, userID string, newName
 	return r0, r1
 }
 
-// UpdatePassword provides a mock function with given fields: ctx, userID, currentPassword, newPassword
-func (_m *MockRepository) UpdatePassword(ctx context.Context, userID string, currentPassword string, newPassword string) (int64, error) {
-	ret := _m.Called(ctx, userID, currentPassword, newPassword)
+// UpdatePassword provides a mock function with given fields: ctx, userID, newPassword
+func (_m *MockRepository) UpdatePassword(ctx context.Context, userID string, newPassword string) (int64, error) {
+	ret := _m.Called(ctx, userID, newPassword)
 
 	var r0 int64
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) int64); ok {
-		r0 = rf(ctx, userID, currentPassword, newPassword)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) int64); ok {
+		r0 = rf(ctx, userID, newPassword)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, userID, currentPassword, newPassword)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, userID, newPassword)
 	} else {
 		r1 = ret.Error(1)
 	}

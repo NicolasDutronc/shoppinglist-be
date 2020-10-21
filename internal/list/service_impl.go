@@ -7,11 +7,6 @@ import (
 	"github.com/NicolasDutronc/shoppinglist-be/pkg/hub"
 )
 
-// Service is a wrapper around all the single method interfaces defining the service
-type Service interface {
-	Repository
-}
-
 // ServiceImpl is the implementation of the Service interface
 type ServiceImpl struct {
 	repository Repository
