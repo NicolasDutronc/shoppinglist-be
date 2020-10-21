@@ -11,7 +11,7 @@ import (
 )
 
 // FindUserByIDHandler is a http handler for the FindByID service
-func FindUserByIDHandler(srv user.FinderByID) gin.HandlerFunc {
+func FindUserByIDHandler(srv user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		user, err := srv.FindByID(c.Request.Context(), id)
@@ -25,7 +25,7 @@ func FindUserByIDHandler(srv user.FinderByID) gin.HandlerFunc {
 }
 
 // FindUserByNameHandler is a http handler for the FindByName service
-func FindUserByNameHandler(srv user.FinderByName) gin.HandlerFunc {
+func FindUserByNameHandler(srv user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		name := c.Param("name")
 		user, err := srv.FindByName(c.Request.Context(), name)
@@ -39,7 +39,7 @@ func FindUserByNameHandler(srv user.FinderByName) gin.HandlerFunc {
 }
 
 // StoreUserHandler is a http handler for the Store service
-func StoreUserHandler(srv user.Storer) gin.HandlerFunc {
+func StoreUserHandler(srv user.Service) gin.HandlerFunc {
 	type request struct {
 		Name     string `json:"name"`
 		Password string `json:"password"`
@@ -64,7 +64,7 @@ func StoreUserHandler(srv user.Storer) gin.HandlerFunc {
 }
 
 // UpdateUserNameHandler is a http handler for the UpdateName service
-func UpdateUserNameHandler(srv user.NameUpdater) gin.HandlerFunc {
+func UpdateUserNameHandler(srv user.Service) gin.HandlerFunc {
 	type request struct {
 		UserID  string `json:"id"`
 		NewName string `json:"newName"`
@@ -90,7 +90,7 @@ func UpdateUserNameHandler(srv user.NameUpdater) gin.HandlerFunc {
 }
 
 // UpdateUserPasswordHandler is a http handler for the UpdatePassword service
-func UpdateUserPasswordHandler(srv user.PasswordUpdater) gin.HandlerFunc {
+func UpdateUserPasswordHandler(srv user.Service) gin.HandlerFunc {
 	type request struct {
 		UserID          string `json:"id"`
 		CurrentPassword string `json:"currentPassword"`
@@ -117,7 +117,7 @@ func UpdateUserPasswordHandler(srv user.PasswordUpdater) gin.HandlerFunc {
 }
 
 // DeleteUserHandler is a http handler for the Delete service
-func DeleteUserHandler(srv user.Deleter) gin.HandlerFunc {
+func DeleteUserHandler(srv user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
@@ -133,7 +133,7 @@ func DeleteUserHandler(srv user.Deleter) gin.HandlerFunc {
 }
 
 // LoginHandler is a http handler for the login service
-func LoginHandler(srv user.LoginService) gin.HandlerFunc {
+func LoginHandler(srv user.Service) gin.HandlerFunc {
 	type request struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -165,7 +165,7 @@ func LoginHandler(srv user.LoginService) gin.HandlerFunc {
 }
 
 // AuthenticateMiddleware is a http middleware for the authenticate service
-func AuthenticateMiddleware(srv user.AuthenticateService) gin.HandlerFunc {
+func AuthenticateMiddleware(srv user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
