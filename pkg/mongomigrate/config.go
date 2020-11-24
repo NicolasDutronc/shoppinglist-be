@@ -44,15 +44,14 @@ type Config struct {
 // NewConfig reads the given configuration file and the environment and returns a newly created Config
 // An error is returned if a field was not found in the configuration (file or env)
 func NewConfig(filepath string) (*Config, error) {
-	v := viper.New()
-	v.SetConfigFile(filepath)
-	v.AutomaticEnv()
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	if err := v.ReadInConfig(); err != nil {
+	viper.SetConfigFile(filepath)
+	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
-
-	v = v.Sub("dbctl")
+	v := viper.Sub("dbctl")
+	v.SetEnvPrefix("DBCTL")
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// fmt.Println("all settings :", v.AllSettings())
 	// fmt.Println("all keys :", v.AllKeys())
