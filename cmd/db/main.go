@@ -27,14 +27,16 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// heroku mongodb uri
+	mongoURI := os.Getenv("MONGODB_URI")
+	if mongoURI == "" {
+		log.Fatal("MONGODB_URI was not set")
+	}
+
 	// database client
-	client, err := mongo.Connect(
-		ctx,
-		options.
-			Client().ApplyURI(config.BuildMongoDBConnexionString()).
-			SetConnectTimeout(5*time.Second).
-			SetServerSelectionTimeout(5*time.Second),
-	)
+	ctxMongo, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctxMongo, options.Client().ApplyURI(mongoURI))
 	defer client.Disconnect(ctx)
 	if err != nil {
 		log.Fatal(err)
