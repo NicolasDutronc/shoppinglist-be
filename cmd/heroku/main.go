@@ -44,7 +44,9 @@ func main() {
 	}
 
 	// database client
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
+	ctxMongo, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctxMongo, options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -115,10 +117,10 @@ func main() {
 
 	log.Println("Shuting down server...")
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctxShutdown, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(ctxShutdown); err != nil {
 		log.Fatalf("Server forced to shutdown before timeout : %s", err)
 	}
 
