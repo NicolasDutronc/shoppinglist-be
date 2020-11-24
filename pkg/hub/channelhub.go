@@ -38,6 +38,8 @@ func NewChannelHub(ctx context.Context, storage Storage, topics ...Topic) (Hub, 
 		}
 	}
 
+	h.state.CreateTopic(ctx, TopicFromString("lists"))
+
 	return h, nil
 }
 
