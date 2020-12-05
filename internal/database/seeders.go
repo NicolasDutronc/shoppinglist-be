@@ -1,8 +1,10 @@
 package database
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/NicolasDutronc/shoppinglist-be/internal/common"
@@ -143,6 +145,50 @@ func GetSeeders() []*mongomigrate.Seeder {
 					if _, err := db.Collection("lists").InsertOne(ctx, l); err != nil {
 						return err
 					}
+				}
+
+				return nil
+			},
+		},
+		{
+			Name: "new_user",
+			Seed: func(ctx context.Context, db *mongo.Database) error {
+				newUser := &user.User{
+					BaseModel: common.BaseModel{
+						ID:        primitive.NewObjectID(),
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					},
+					Permissions: []*user.Permission{
+						{
+							Action:     "*",
+							ResourceID: "*",
+						},
+					},
+				}
+
+				fmt.Println("Please enter a name for the new user")
+				reader := bufio.NewReader(os.Stdin)
+				userName, err := reader.ReadString('\n')
+				if err != nil {
+					return err
+				}
+				newUser.Name = userName
+
+				fmt.Printf("Please enter a password for %s", userName)
+				pwd, err := terminal.ReadPassword(0)
+				if err != nil {
+					return err
+				}
+
+				encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+				if err != nil {
+					return err
+				}
+
+				newUser.Password = string(encryptedPassword)
+				if _, err := db.Collection("users").InsertOne(ctx, newUser); err != nil {
+					return err
 				}
 
 				return nil
