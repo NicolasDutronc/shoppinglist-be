@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/NicolasDutronc/shoppinglist-be/internal/common"
@@ -173,7 +174,9 @@ func GetSeeders() []*mongomigrate.Seeder {
 				if err != nil {
 					return err
 				}
-				newUser.Name = userName
+
+				// remove delimiter
+				newUser.Name = strings.Replace(userName, "\n", "", -1)
 
 				fmt.Printf("Please enter a password for %s", userName)
 				pwd, err := terminal.ReadPassword(0)
