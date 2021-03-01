@@ -1,9 +1,9 @@
-// +heroku goVersion go1.15
+// +heroku goVersion go1.16
 // +heroku install ./cmd/heroku
 
 module github.com/NicolasDutronc/shoppinglist-be
 
-go 1.15
+go 1.16
 
 require (
 	github.com/NicolasDutronc/autokey v0.1.1
