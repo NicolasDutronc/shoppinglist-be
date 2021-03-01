@@ -123,3 +123,53 @@ func (r *MongoDBRepository) Delete(ctx context.Context, userID string) (int64, e
 
 	return result.DeletedCount, nil
 }
+
+// AddPermissions adds the permissions to the user
+func (r *MongoDBRepository) AddPermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error) {
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return -1, err
+	}
+
+	result, err := r.UserCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": objectID},
+		bson.D{
+			{"$push", bson.D{{"permissions", permissions}}},
+			{"$set", bson.D{{"updated_at", time.Now()}}},
+		},
+	)
+
+	if err != nil {
+		return -1, err
+	}
+
+	return result.ModifiedCount, nil
+}
+
+// RemovePermissions adds the permissions to the user
+func (r *MongoDBRepository) RemovePermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error) {
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return -1, err
+	}
+
+	result, err := r.UserCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": objectID},
+		bson.D{
+			{"$pull", bson.D{
+				{"permissions", bson.D{
+					{"$in", permissions},
+				}},
+			}},
+			{"$set", bson.D{{"updated_at", time.Now()}}},
+		},
+	)
+
+	if err != nil {
+		return -1, err
+	}
+
+	return result.ModifiedCount, nil
+}

@@ -32,6 +32,12 @@ type Deleter interface {
 	Delete(ctx context.Context, userID string) (int64, error)
 }
 
+// PermissionsUpdater defines user permissions operations
+type PermissionsUpdater interface {
+	AddPermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error)
+	RemovePermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error)
+}
+
 // Repository defines all possible actions on users database
 type Repository interface {
 	FinderByID
@@ -40,4 +46,5 @@ type Repository interface {
 	NameUpdater
 	PasswordUpdater
 	Deleter
+	PermissionsUpdater
 }
