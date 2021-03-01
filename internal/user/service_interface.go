@@ -28,4 +28,8 @@ type Service interface {
 	UpdatePassword(ctx context.Context, userID string, currentPassword string, newPassword string) (int64, error)
 
 	Delete(ctx context.Context, userID string) (int64, error)
+
+	AddPermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error)
+
+	RemovePermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error)
 }

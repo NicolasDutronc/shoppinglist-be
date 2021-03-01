@@ -20,9 +20,11 @@ func SetupRoutes(userSrv user.Service, listSrv list.Service, h hub.Hub) *gin.Eng
 	users.GET("/id/:id", FindUserByIDHandler(userSrv))
 	users.GET("/name/:name", FindUserByNameHandler(userSrv))
 	users.POST("", StoreUserHandler(userSrv))
-	users.PUT("/name", UpdateUserNameHandler(userSrv))
-	users.PUT("/password", UpdateUserPasswordHandler(userSrv))
+	users.PUT("/:id/name", UpdateUserNameHandler(userSrv))
+	users.PUT("/:id/password", UpdateUserPasswordHandler(userSrv))
 	users.DELETE("/:id", DeleteUserHandler(userSrv))
+	users.PUT("/:id/permissions/add", AddPermissionsHandler(userSrv))
+	users.PUT("/:id/permissions/remove", RemovePermissionsHandler(userSrv))
 
 	lists := restricted.Group("/lists")
 	lists.GET("", FindAllListsHandler(listSrv))

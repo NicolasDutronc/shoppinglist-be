@@ -66,7 +66,6 @@ func StoreUserHandler(srv user.Service) gin.HandlerFunc {
 // UpdateUserNameHandler is a http handler for the UpdateName service
 func UpdateUserNameHandler(srv user.Service) gin.HandlerFunc {
 	type request struct {
-		UserID  string `json:"id"`
 		NewName string `json:"newName"`
 	}
 
@@ -77,7 +76,9 @@ func UpdateUserNameHandler(srv user.Service) gin.HandlerFunc {
 			return
 		}
 
-		n, err := srv.UpdateName(c.Request.Context(), req.UserID, req.NewName)
+		userID := c.Param("id")
+
+		n, err := srv.UpdateName(c.Request.Context(), userID, req.NewName)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -92,7 +93,6 @@ func UpdateUserNameHandler(srv user.Service) gin.HandlerFunc {
 // UpdateUserPasswordHandler is a http handler for the UpdatePassword service
 func UpdateUserPasswordHandler(srv user.Service) gin.HandlerFunc {
 	type request struct {
-		UserID          string `json:"id"`
 		CurrentPassword string `json:"currentPassword"`
 		NewPassword     string `json:"newPassword"`
 	}
@@ -104,7 +104,9 @@ func UpdateUserPasswordHandler(srv user.Service) gin.HandlerFunc {
 			return
 		}
 
-		n, err := srv.UpdatePassword(c.Request.Context(), req.UserID, req.CurrentPassword, req.NewPassword)
+		userID := c.Param("id")
+
+		n, err := srv.UpdatePassword(c.Request.Context(), userID, req.CurrentPassword, req.NewPassword)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -124,10 +126,65 @@ func DeleteUserHandler(srv user.Service) gin.HandlerFunc {
 		n, err := srv.Delete(c.Request.Context(), id)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
+			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"number_of_deleted": n,
+		})
+	}
+}
+
+// AddPermissionsHandler is a http handler for the AddPermissions service
+func AddPermissionsHandler(srv user.Service) gin.HandlerFunc {
+	type request struct {
+		Permissions []*user.Permission `json:"permissions"`
+	}
+
+	return func(c *gin.Context) {
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		userID := c.Param("id")
+
+		n, err := srv.AddPermissions(c.Request.Context(), userID, req.Permissions...)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"number_of_updated": n,
+		})
+	}
+}
+
+// RemovePermissionsHandler is a http handler for the RemovePermissions service
+func RemovePermissionsHandler(srv user.Service) gin.HandlerFunc {
+	type request struct {
+		Permissions []*user.Permission `json:"permissions"`
+	}
+
+	return func(c *gin.Context) {
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+
+		userID := c.Param("id")
+
+		n, err := srv.RemovePermissions(c.Request.Context(), userID, req.Permissions...)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"number_of_updated": n,
 		})
 	}
 }

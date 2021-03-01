@@ -72,6 +72,16 @@ func (s *ServiceImpl) Delete(ctx context.Context, userID string) (int64, error) 
 	return s.repo.Delete(ctx, userID)
 }
 
+// AddPermissions adds permissions to the user
+func (s *ServiceImpl) AddPermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error) {
+	return s.repo.AddPermissions(ctx, userID, permissions...)
+}
+
+// RemovePermissions removes permissions from the user
+func (s *ServiceImpl) RemovePermissions(ctx context.Context, userID string, permissions ...*Permission) (int64, error) {
+	return s.repo.RemovePermissions(ctx, userID, permissions...)
+}
+
 // Login takes in a user name and a password and returns the corresponding user along with a token.
 // An error is returned instead if it cannot retrieve the user based on the given user name or if the given password does not match or if there is any issue retrieving the key and signing the token
 func (s *ServiceImpl) Login(ctx context.Context, userName string, password string) (*User, string, error) {
