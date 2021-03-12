@@ -1,0 +1,123 @@
+version: "3.8"
+services:
+  
+  mongo-replica-setup:
+    container_name: mongo-setup
+    image: 'mongo'
+    restart: on-failure
+    volumes:
+      - mongodb/scripts/mongosetup.sh:/scripts/mongosetup.sh
+    entrypoint: ["bash", "/scripts/mongosetup.sh" ]
+    env_file:
+        - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+
+  mongo1:
+    hostname: 'mongo1'
+    container_name: 'mongo1'
+    image: 'mongo'
+    restart: 'on-failure'
+    command: ["-f", "/etc/mongod.conf", "--keyFile", "/auth/file.key", "--replSet", "rs", "--bind_ip_all"]
+    expose: 
+      - 27017
+    ports: 
+      - 30001:27017
+    volumes:
+      - services_data/dataMongo1:/data/db
+      - services_data/logMongo1:/var/log/mongodb
+      - mongodb/initdb.d/:/docker-entrypoint-initdb.d/
+      - mongodb/mongod.conf:/etc/mongod.conf
+      - mongodb/file.key:/auth/file.key
+    healthcheck:
+      test: test $$(echo "rs.status().ok" | mongo -u root -p password --quiet) -eq 1
+      interval: 30s
+      start_period: 60s
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+
+  mongo2:
+  hostname: 'mongo2'
+  container_name: 'mongo2'
+  image: 'mongo'
+  command: ["-f", "/etc/mongod.conf", "--keyFile", "/auth/file.key", "--replSet", "rs", "--bind_ip_all"]
+  restart: 'on-failure'
+  expose: 
+    - 27017
+  ports: 
+    - 30002:27017 
+  volumes:
+    - services_data/dataMongo2:/data/db
+    - services_data/logMongo2:/var/log/mongodb
+    - mongodb/mongod.conf:/etc/mongod.conf
+    - mongodb/file.key:/auth/file.key
+  environment:
+    MONGO_INITDB_ROOT_USERNAME: root
+    MONGO_INITDB_ROOT_PASSWORD: password
+  depends_on: 
+      - mongo1
+
+  mongo3:
+    hostname: 'mongo3'
+    container_name: 'mongo3'
+    image: 'mongo'
+    command: ["-f", "/etc/mongod.conf", "--keyFile", "/auth/file.key", "--replSet", "rs", "--bind_ip_all"]
+    restart: 'on-failure'
+    expose: 
+      - 27017
+    ports: 
+      - 30003:27017 
+    volumes:
+      - services_data/dataMongo3:/data/db
+      - services_data/logMongo3:/var/log/mongodb
+      - mongodb/mongod.conf:/etc/mongod.conf
+      - mongodb/file.key:/auth/file.key
+    environment:
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: password
+    depends_on: 
+        - mongo1
+
+  adminui:
+    image: mongo-express
+    container_name: adminui
+    depends_on:
+      - database
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: database
+      ME_CONFIG_BASICAUTH_USERNAME: user
+      ME_CONFIG_BASICAUTH_PASSWORD: password
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+
+  shoplist:
+    build:
+      context: ./../
+      dockerfile: ./build/Dockerfile
+    container_name: shoplist
+    depends_on:
+      - database
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      APP_KEY_SIZE: 64
+      APP_KEY_VALID_DURATION: 24h
+      APP_HOSTNAME: 0.0.0.0
+      APP_PORT: 8080
+      APP_DATABASE_USERNAME: backend_user
+      APP_DATABASE_PASSWORD: password
+      APP_DATABASE_HOSTNAME: database
+      APP_DATABASE_PORT: 27017
+      APP_DATABASE_NAME: shoplist
+      APP_DATABASE_LIST_COLLECTION: lists
+      APP_DATABASE_USER_COLLECTION: users

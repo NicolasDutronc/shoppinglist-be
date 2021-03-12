@@ -7,14 +7,12 @@ app:
         password: backend_password
         hostname: localhost
         port: 27017
-        db: shoplist
+        db: shoppinglist
         lists_collection: lists
         users_collection: users
     server:
         hostname: 0.0.0.0
         port: 8080
-        crt: ./server.crt
-        key: ./server.key
 
 dbctl:
     database:
@@ -24,5 +22,5 @@ dbctl:
         username: root
         password: password
     migrations:
-        db: shoplist
+        db: shoppinglist
         collection: migrations

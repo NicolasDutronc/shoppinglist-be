@@ -34,7 +34,7 @@ func GetMigrations() []*mongomigrate.Migration {
 										Value: bson.D{
 											{
 												Key:   "db",
-												Value: "shoplist",
+												Value: "shoppinglist",
 											},
 											{
 												Key:   "collection",
@@ -43,7 +43,7 @@ func GetMigrations() []*mongomigrate.Migration {
 										}},
 									{
 										Key:   "actions",
-										Value: bson.A{"find", "update", "insert", "remove"},
+										Value: bson.A{"find", "update", "insert", "remove", "changeStream"},
 									},
 								},
 
@@ -53,7 +53,7 @@ func GetMigrations() []*mongomigrate.Migration {
 										Value: bson.D{
 											{
 												Key:   "db",
-												Value: "shoplist",
+												Value: "shoppinglist",
 											},
 											{
 												Key:   "collection",
@@ -62,7 +62,7 @@ func GetMigrations() []*mongomigrate.Migration {
 										}},
 									{
 										Key:   "actions",
-										Value: bson.A{"find", "update", "insert", "remove"},
+										Value: bson.A{"find", "update", "insert", "remove", "changeStream"},
 									},
 								},
 							},

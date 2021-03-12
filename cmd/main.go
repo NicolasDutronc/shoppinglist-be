@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/NicolasDutronc/shoppinglist-be/internal/list"
 	"github.com/NicolasDutronc/shoppinglist-be/internal/user"
 	"github.com/NicolasDutronc/shoppinglist-be/pkg/hub"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -81,6 +83,24 @@ func main() {
 	// setup routes
 	r := api.SetupRoutes(userSrv, listSrv, h)
 	r.StaticFile("/", "./public/index.html")
+
+	changeStream, err := listCollection.Watch(ctx, mongo.Pipeline{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer changeStream.Close(ctx)
+	go func() {
+		for changeStream.Next(ctx) {
+			var data bson.M
+
+			if err := changeStream.Decode(&data); err != nil {
+				panic(err)
+			}
+
+			fmt.Printf("Event from mongo : %v\n", data)
+		}
+	}()
 
 	// setup server
 	server := &http.Server{
