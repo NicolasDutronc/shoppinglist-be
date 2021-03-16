@@ -29,11 +29,11 @@ func (e *ErrKeyNotFound) Error() string {
 // Config holds the configuration for mongomigrate
 type Config struct {
 	Database struct {
-		Hostname string `mapstructure:"hostname"`
-		Port     string `mapstructure:"port"`
-		DB       string `mapstructure:"db"`
-		Username string `mapstructure:"username"`
-		Password string `mapstructure:"password"`
+		Hostnames  string `mapstructure:"hostnames"`
+		ReplicaSet string `mapstructure:"replicaset"`
+		DB         string `mapstructure:"db"`
+		Username   string `mapstructure:"username"`
+		Password   string `mapstructure:"password"`
 	} `mapstructure:"database"`
 	Migrations struct {
 		DB         string `mapstructure:"db"`
@@ -81,11 +81,11 @@ func NewConfig(filepath string) (*Config, error) {
 // BuildMongoDBConnexionString returns the mongoDB connexion url
 func (c *Config) BuildMongoDBConnexionString() string {
 	return fmt.Sprintf(
-		"mongodb://%s:%s@%s:%s/%s",
+		"mongodb://%s:%s@%s/%s?replicaSet=%s",
 		c.Database.Username,
 		c.Database.Password,
-		c.Database.Hostname,
-		c.Database.Port,
+		c.Database.Hostnames,
 		c.Database.DB,
+		c.Database.ReplicaSet,
 	)
 }

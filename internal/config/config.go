@@ -44,8 +44,8 @@ type Config struct {
 	Database struct {
 		Username        string `mapstructure:"username"`
 		Password        string `mapstructure:"password"`
-		Hostname        string `mapstructure:"hostname"`
-		Port            string `mapstructure:"port"`
+		Hostnames       string `mapstructure:"hostnames"`
+		ReplicaSet      string `mapstructure:"replicaset"`
 		Name            string `mapstructure:"db"`
 		ListsCollection string `mapstructure:"lists_collection"`
 		UsersCollection string `mapstructure:"users_collection"`
@@ -84,12 +84,12 @@ func NewConfig(filepath string) (*Config, error) {
 // BuildMongoDBConnexionString returns the mongoDB connexion url
 func (c *Config) BuildMongoDBConnexionString() string {
 	return fmt.Sprintf(
-		"mongodb://%s:%s@%s:%s/%s",
+		"mongodb://%s:%s@%s/%s?replicaSet=%s",
 		c.Database.Username,
 		c.Database.Password,
-		c.Database.Hostname,
-		c.Database.Port,
+		c.Database.Hostnames,
 		c.Database.Name,
+		c.Database.ReplicaSet,
 	)
 }
 
