@@ -1,11 +1,11 @@
 package hub
 
 import (
-	"errors"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // JSONProcessor sends its messages as JSON payloads
@@ -43,11 +43,7 @@ func SubscribeJSONHandler(h Hub) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
 
-		processorID := c.GetHeader("Processor-ID")
-		if processorID == "" {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Processor-ID header was not set"))
-			return
-		}
+		processorID := uuid.NewString()
 
 		processor := &JSONProcessor{
 			BaseProcessor: BaseProcessor{
@@ -66,6 +62,10 @@ func SubscribeJSONHandler(h Hub) gin.HandlerFunc {
 				c.AbortWithError(http.StatusInternalServerError, err)
 			}
 		}()
+
+		c.JSON(http.StatusCreated, gin.H{
+			"processor-id": processorID,
+		})
 
 		if err := Run(processor); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
