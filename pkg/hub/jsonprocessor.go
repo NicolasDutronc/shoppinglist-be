@@ -3,6 +3,7 @@ package hub
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -38,6 +39,15 @@ func (p *JSONProcessor) GetDoneChannel() <-chan struct{} {
 	return p.ginContext.Request.Context().Done()
 }
 
+type connectionMessage struct {
+	BaseMessage
+	ProcessorID string `json:"processor-id"`
+}
+
+func (msg *connectionMessage) GetType() string {
+	return "connectionMessage"
+}
+
 // SubscribeJSONHandler retrieves the processor id of the client, initiates the processor, registers it and starts it
 func SubscribeJSONHandler(h Hub) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -63,8 +73,12 @@ func SubscribeJSONHandler(h Hub) gin.HandlerFunc {
 			}
 		}()
 
-		c.JSON(http.StatusCreated, gin.H{
-			"processor-id": processorID,
+		processor.Process(&connectionMessage{
+			BaseMessage: BaseMessage{
+				ID:    time.Now().Unix(),
+				Topic: TopicFromString("internal"),
+			},
+			ProcessorID: processorID,
 		})
 
 		if err := Run(processor); err != nil {
