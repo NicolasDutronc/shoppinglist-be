@@ -67,5 +67,5 @@ func main() {
 	r.POST("/unsubscribe", hub.UnsubscriptionHandler(h))
 	r.POST("/lists/:id/send", api.AddItemHandler(&mockListItemAdder{h: h}))
 
-	r.RunTLS(":8080", "server.crt", "server.key")
+	r.Run(":8080")
 }
