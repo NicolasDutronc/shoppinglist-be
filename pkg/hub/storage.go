@@ -5,65 +5,50 @@ import (
 	"fmt"
 )
 
-// Storage is an interface defining how a hub can store its state, i.e. its topics and processors
-type Storage interface {
-	CreateTopic(ctx context.Context, topic Topic) error
-	DeleteTopic(ctx context.Context, topic Topic) error
-	ListTopics(ctx context.Context) ([]Topic, error)
-	TopicExists(ctx context.Context, topic Topic) (bool, error)
-
-	RegisterProcessor(ctx context.Context, p Processor) error
-	UnregisterProcessor(ctx context.Context, p Processor) error
-	GetProcessor(ctx context.Context, ID string) (Processor, error)
-	ListProcessors(ctx context.Context) ([]Processor, error)
-
-	Subscribe(ctx context.Context, p Processor, t Topic) error
-	Unsubscribe(ctx context.Context, p Processor, t Topic) error
-	GetSubscribers(ctx context.Context, t Topic) ([]Processor, error)
-	HasSubscribed(ctx context.Context, p Processor, t Topic) (bool, error)
+// Storage keeps track of processors and subscriptions
+type Storage struct {
+	Topics            map[Topic]map[Processor]bool
+	Processors        map[string]Processor
+	MessageHooks      map[Processor]bool
+	SubscriptionHooks map[SubscriptionHook]bool
 }
 
-// InMemoryHubStorage is an in-memory hub storage
-// Topics and processors are kept in memory
-type InMemoryHubStorage struct {
-	topics     map[Topic]map[Processor]bool
-	processors map[string]Processor
-}
-
-// NewInMemoryHubStorage returns an empty InMemoryHubStorage
-func NewInMemoryHubStorage() Storage {
-	return &InMemoryHubStorage{
-		topics:     make(map[Topic]map[Processor]bool),
-		processors: make(map[string]Processor),
+// NewStorage returns an empty Storage
+func NewStorage() *Storage {
+	return &Storage{
+		Topics:            make(map[Topic]map[Processor]bool),
+		Processors:        make(map[string]Processor),
+		MessageHooks:      make(map[Processor]bool),
+		SubscriptionHooks: make(map[SubscriptionHook]bool),
 	}
 }
 
 // CreateTopic checks if the topic already exists and creates it. An error is returned instead if the topic already exists.
-func (hs *InMemoryHubStorage) CreateTopic(ctx context.Context, topic Topic) error {
-	if _, exists := hs.topics[topic]; exists {
+func (hs *Storage) CreateTopic(ctx context.Context, topic Topic) error {
+	if _, exists := hs.Topics[topic]; exists {
 		return fmt.Errorf("Topic %v already exists", topic)
 	}
 
-	hs.topics[topic] = make(map[Processor]bool)
+	hs.Topics[topic] = make(map[Processor]bool)
 
 	return nil
 }
 
 // DeleteTopic checks if the topic exists and deletes it. An error is returned instead if the topic does not exist.
-func (hs *InMemoryHubStorage) DeleteTopic(ctx context.Context, topic Topic) error {
-	if _, exists := hs.topics[topic]; !exists {
+func (hs *Storage) DeleteTopic(ctx context.Context, topic Topic) error {
+	if _, exists := hs.Topics[topic]; !exists {
 		return fmt.Errorf("Topic %v does not exist", topic)
 	}
 
-	delete(hs.topics, topic)
+	delete(hs.Topics, topic)
 
 	return nil
 }
 
 // ListTopics returns all stored topics as a list
-func (hs *InMemoryHubStorage) ListTopics(ctx context.Context) ([]Topic, error) {
+func (hs *Storage) ListTopics(ctx context.Context) ([]Topic, error) {
 	topics := []Topic{}
-	for topic := range hs.topics {
+	for topic := range hs.Topics {
 		topics = append(topics, topic)
 	}
 
@@ -71,46 +56,46 @@ func (hs *InMemoryHubStorage) ListTopics(ctx context.Context) ([]Topic, error) {
 }
 
 // TopicExists returns true if the topic exists in the hub
-func (hs *InMemoryHubStorage) TopicExists(ctx context.Context, topic Topic) (bool, error) {
-	_, exists := hs.topics[topic]
+func (hs *Storage) TopicExists(ctx context.Context, topic Topic) (bool, error) {
+	_, exists := hs.Topics[topic]
 	return exists, nil
 }
 
 // RegisterProcessor adds a processor in the processors map. An error is returned instead if the processor is already registered
-func (hs *InMemoryHubStorage) RegisterProcessor(ctx context.Context, p Processor) error {
-	if _, exists := hs.processors[p.GetID()]; exists {
+func (hs *Storage) RegisterProcessor(ctx context.Context, p Processor) error {
+	if _, exists := hs.Processors[p.GetID()]; exists {
 		return fmt.Errorf("Processor %v is already registered", p.GetID())
 	}
 
-	hs.processors[p.GetID()] = p
+	hs.Processors[p.GetID()] = p
 
 	return nil
 }
 
 // UnregisterProcessor delete a processor from the processors map. An error is returned instead if the given processor is not registered
-func (hs *InMemoryHubStorage) UnregisterProcessor(ctx context.Context, p Processor) error {
-	if _, exists := hs.processors[p.GetID()]; !exists {
+func (hs *Storage) UnregisterProcessor(ctx context.Context, p Processor) error {
+	if _, exists := hs.Processors[p.GetID()]; !exists {
 		return fmt.Errorf("Processor %v is not registered", p.GetID())
 	}
 
-	delete(hs.processors, p.GetID())
+	delete(hs.Processors, p.GetID())
 
 	return nil
 }
 
 // GetProcessor returns the processor that has the given id. An error is returned instead if no processor with the given id is found
-func (hs *InMemoryHubStorage) GetProcessor(ctx context.Context, ID string) (Processor, error) {
-	if _, exists := hs.processors[ID]; !exists {
+func (hs *Storage) GetProcessor(ctx context.Context, ID string) (Processor, error) {
+	if _, exists := hs.Processors[ID]; !exists {
 		return nil, fmt.Errorf("Processor %v is not registered", ID)
 	}
 
-	return hs.processors[ID], nil
+	return hs.Processors[ID], nil
 }
 
 // ListProcessors returns all registered processors as a list
-func (hs *InMemoryHubStorage) ListProcessors(ctx context.Context) ([]Processor, error) {
+func (hs *Storage) ListProcessors(ctx context.Context) ([]Processor, error) {
 	processors := []Processor{}
-	for _, p := range hs.processors {
+	for _, p := range hs.Processors {
 		processors = append(processors, p)
 	}
 
@@ -118,48 +103,48 @@ func (hs *InMemoryHubStorage) ListProcessors(ctx context.Context) ([]Processor, 
 }
 
 // Subscribe adds the processor p to the subscribers of topic t. An error is returned instead if the processor or the topic does not exist
-func (hs *InMemoryHubStorage) Subscribe(ctx context.Context, p Processor, t Topic) error {
+func (hs *Storage) Subscribe(ctx context.Context, p Processor, t Topic) error {
 	// check processor
 	if _, err := hs.GetProcessor(ctx, p.GetID()); err != nil {
 		return err
 	}
 
 	// check topic
-	if _, exists := hs.topics[t]; !exists {
+	if _, exists := hs.Topics[t]; !exists {
 		return fmt.Errorf("Topic %v does not exist", t)
 	}
 
-	hs.topics[t][p] = true
+	hs.Topics[t][p] = true
 
 	return nil
 }
 
 // Unsubscribe deletes processor p from the subscribers of t. An error is returned instead if the processor or the topic does not exist
-func (hs *InMemoryHubStorage) Unsubscribe(ctx context.Context, p Processor, t Topic) error {
+func (hs *Storage) Unsubscribe(ctx context.Context, p Processor, t Topic) error {
 	// check processor
 	if _, err := hs.GetProcessor(ctx, p.GetID()); err != nil {
 		return err
 	}
 
 	// check topic
-	if _, exists := hs.topics[t]; !exists {
+	if _, exists := hs.Topics[t]; !exists {
 		return fmt.Errorf("Topic %v does not exist", t)
 	}
 
-	delete(hs.topics[t], p)
+	delete(hs.Topics[t], p)
 
 	return nil
 }
 
 // GetSubscribers returns the subscribers of topic t. An error is returned instead if the topic does not exist
-func (hs *InMemoryHubStorage) GetSubscribers(ctx context.Context, t Topic) ([]Processor, error) {
+func (hs *Storage) GetSubscribers(ctx context.Context, t Topic) ([]Processor, error) {
 	// check topic
-	if _, exists := hs.topics[t]; !exists {
+	if _, exists := hs.Topics[t]; !exists {
 		return nil, fmt.Errorf("Topic %v does not exist", t)
 	}
 
 	processors := []Processor{}
-	for p := range hs.topics[t] {
+	for p := range hs.Topics[t] {
 		processors = append(processors, p)
 	}
 
@@ -167,17 +152,38 @@ func (hs *InMemoryHubStorage) GetSubscribers(ctx context.Context, t Topic) ([]Pr
 }
 
 // HasSubscribed returns true if the processor p has subscribed to the topic t. An error is returned instead if the processor or the topic does not exist
-func (hs *InMemoryHubStorage) HasSubscribed(ctx context.Context, p Processor, t Topic) (bool, error) {
+func (hs *Storage) HasSubscribed(ctx context.Context, p Processor, t Topic) (bool, error) {
 	// check processor
 	if _, err := hs.GetProcessor(ctx, p.GetID()); err != nil {
 		return false, err
 	}
 
 	// check topic
-	if _, exists := hs.topics[t]; !exists {
+	if _, exists := hs.Topics[t]; !exists {
 		return false, fmt.Errorf("Topic %v does not exist", t)
 	}
 
 	// check subscription
-	return hs.topics[t][p], nil
+	return hs.Topics[t][p], nil
+}
+
+func (hs *Storage) RegisterMessageHook(ctx context.Context, hook Processor) error {
+	hs.MessageHooks[hook] = true
+
+	return nil
+}
+
+func (hs *Storage) UnregisterMessageHook(ctx context.Context, hook Processor) error {
+	delete(hs.MessageHooks, hook)
+
+	return nil
+}
+
+func (hs *Storage) GetMessageHooks(ctx context.Context) ([]Processor, error) {
+	hooks := []Processor{}
+	for hook := range hs.MessageHooks {
+		hooks = append(hooks, hook)
+	}
+
+	return hooks, nil
 }

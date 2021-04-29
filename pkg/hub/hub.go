@@ -29,13 +29,20 @@ type Hub interface {
 	GetProcessor(ctx context.Context, processorID string) (Processor, error)
 	RegisterProcessor(ctx context.Context, p Processor) error
 	UnregisterProcessor(ctx context.Context, p Processor) error
+
+	GetTopics(ctx context.Context) ([]Topic, error)
 	AddTopic(ctx context.Context, topic Topic) error
 	DeleteTopic(ctx context.Context, topic Topic) error
+
 	Subscribe(ctx context.Context, p Processor, topic Topic) error
 	Unsubscribe(ctx context.Context, p Processor, topic Topic) error
 	Publish(ctx context.Context, msg Message) error
-	Close(ctx context.Context) error
+
+	RegisterMessageHook(ctx context.Context, hook Processor) error
+	UnregisterMessageHook(ctx context.Context, hook Processor) error
+
 	Run(ctx context.Context, interrupt chan struct{}) error
+	Close(ctx context.Context) error
 }
 
 // SubscriptionHandler is a gin http handler for topic subscription

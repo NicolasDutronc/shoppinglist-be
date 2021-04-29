@@ -71,6 +71,11 @@ func (h *ChannelHub) UnregisterProcessor(ctx context.Context, p Processor) error
 	return nil
 }
 
+// GetTopics returns the topics of this hub
+func (h *ChannelHub) GetTopics(ctx context.Context) ([]Topic, error) {
+	return h.state.ListTopics(ctx)
+}
+
 // AddTopic creates a new topic
 func (h *ChannelHub) AddTopic(ctx context.Context, topic Topic) error {
 	// check if topic does not already exist
@@ -170,6 +175,14 @@ func (h *ChannelHub) Publish(ctx context.Context, msg Message) error {
 	return nil
 }
 
+func (h *ChannelHub) RegisterMessageHook(ctx context.Context, hook Processor) error {
+	return h.state.RegisterMessageHook(ctx, hook)
+}
+
+func (h *ChannelHub) UnregisterMessageHook(ctx context.Context, hook Processor) error {
+	return h.state.UnregisterMessageHook(ctx, hook)
+}
+
 // Close safely stops the hub by unregistering all processors
 func (h *ChannelHub) Close(ctx context.Context) error {
 	processors, err := h.state.ListProcessors(ctx)
@@ -267,6 +280,10 @@ func (h *ChannelHub) Run(ctx context.Context, interrupt chan struct{}) error {
 			processors, err := h.state.GetSubscribers(ctx, message.Topic)
 			if err != nil {
 				return err
+			}
+
+			for hook := range h.state.MessageHooks {
+				processors = append(processors, hook)
 			}
 
 			for _, processor := range processors {
