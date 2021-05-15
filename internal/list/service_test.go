@@ -8,6 +8,7 @@ import (
 
 	"github.com/NicolasDutronc/shoppinglist-be/internal/common"
 	"github.com/NicolasDutronc/shoppinglist-be/internal/list"
+	mocks "github.com/NicolasDutronc/shoppinglist-be/mocks/pkg/hub"
 	"github.com/NicolasDutronc/shoppinglist-be/pkg/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -19,13 +20,13 @@ type ListServiceTestSuite struct {
 	suite.Suite
 	srv        *list.ServiceImpl
 	mockedRepo *list.MockRepository
-	mockedHub  *hub.MockHub
+	mockedHub  *mocks.Hub
 	list       *list.Shoppinglist
 }
 
 func (s *ListServiceTestSuite) SetupTest() {
 	s.mockedRepo = &list.MockRepository{}
-	s.mockedHub = &hub.MockHub{}
+	s.mockedHub = &mocks.Hub{}
 	s.srv = list.NewService(s.mockedRepo, s.mockedHub).(*list.ServiceImpl)
 
 	s.list = &list.Shoppinglist{
