@@ -74,10 +74,7 @@ func SubscribeJSONHandler(h Hub) gin.HandlerFunc {
 		}()
 
 		processor.Process(&connectionMessage{
-			BaseMessage: BaseMessage{
-				ID:    time.Now().Unix(),
-				Topic: TopicFromString("internal"),
-			},
+			BaseMessage: NewBaseMessage(time.Now().Unix(), TopicFromString("internal")),
 			ProcessorID: processorID,
 		})
 
