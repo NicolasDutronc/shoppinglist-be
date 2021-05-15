@@ -7,6 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	SUBSCRIPTION_TOPIC   Topic = TopicFromString("_internal_subscription_topic")
+	UNSUBSCRIPTION_TOPIC Topic = TopicFromString("_internal_unsubscription_topic")
+)
+
 type payload struct {
 	ID    int64
 	Type  string
@@ -14,14 +19,24 @@ type payload struct {
 	Msg   Message
 }
 
-type subscriptionMessage struct {
-	topic     Topic
-	processor Processor
+type SubscriptionMessage struct {
+	BaseMessage
+	Topic     Topic
+	Processor Processor
 }
 
-type unsubscriptionMessage struct {
-	topic     Topic
-	processor Processor
+func (msg SubscriptionMessage) GetType() string {
+	return "_internal_subscription_message"
+}
+
+type UnsubscriptionMessage struct {
+	BaseMessage
+	Topic     Topic
+	Processor Processor
+}
+
+func (msg UnsubscriptionMessage) GetType() string {
+	return "_internal_unsubscription_message"
 }
 
 // Hub defines the methods used to (un)register processors, (un)subscribe processors, perform topic operations, publishing messages into the hub as well as the methods to run and close the hub

@@ -1,4 +1,4 @@
-package hub
+package dispatcher
 
 import (
 	"context"
@@ -21,9 +21,9 @@ type HubServerinfo struct {
 type DispatcherStorage interface {
 	GetSubscribers(ctx context.Context, topic hub.Topic) ([]*HubServerinfo, error)
 
-	RegisterItself(ctx context.Context, topic hub.Topic) error
+	Subscribe(ctx context.Context, dispatcher *Dispatcher, topic hub.Topic) error
 
-	UnregisterItSelf(ctx context.Context, topic hub.Topic) error
+	Unsubscribe(ctx context.Context, dispatcher *Dispatcher, topic hub.Topic) error
 }
 
 func (d *Dispatcher) NotifyServers(ctx context.Context, msg hub.Message) error {
@@ -33,8 +33,10 @@ func (d *Dispatcher) NotifyServers(ctx context.Context, msg hub.Message) error {
 	}
 
 	for _, subscriber := range subscribers {
-		if err := d.notifyServer(ctx, msg, subscriber); err != nil {
-			fmt.Printf("Could not notify server %s", subscriber.Addresss)
+		if subscriber.Addresss != d.serverInfo.Addresss {
+			if err := d.notifyServer(ctx, msg, subscriber); err != nil {
+				fmt.Printf("Could not notify server %s", subscriber.Addresss)
+			}
 		}
 	}
 
@@ -47,16 +49,4 @@ func (d *Dispatcher) notifyServer(ctx context.Context, msg hub.Message, serverIn
 
 func (d *Dispatcher) MessageHandler() gin.HandlerFunc {
 	return nil
-}
-
-type DispatcherProcessor struct {
-	hub.BaseProcessor
-	dispatcher *Dispatcher
-}
-
-func (dp *DispatcherProcessor) Process(msg hub.Message) error {
-	if err := dp.dispatcher.storage.RegisterItself(context.TODO(), msg.GetTopic()); err != nil {
-		return err
-	}
-	return dp.dispatcher.NotifyServers(context.TODO(), msg)
 }

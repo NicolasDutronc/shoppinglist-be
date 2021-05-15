@@ -9,25 +9,25 @@ import (
 
 // ChannelHub is a hub based on channels
 type ChannelHub struct {
-	state       Storage
+	state       *Storage
 	broadcast   chan *payload
 	register    chan Processor
 	unregister  chan Processor
-	subscribe   chan *subscriptionMessage
-	unsubscribe chan *unsubscriptionMessage
+	subscribe   chan *SubscriptionMessage
+	unsubscribe chan *UnsubscriptionMessage
 	topics      chan *topicOpMessage
 	done        chan struct{}
 }
 
 // NewChannelHub creates a new channel hub and initiates a list of topics
-func NewChannelHub(ctx context.Context, storage Storage, topics ...Topic) (Hub, error) {
+func NewChannelHub(ctx context.Context, storage *Storage, topics ...Topic) (Hub, error) {
 	h := &ChannelHub{
 		state:       storage,
 		broadcast:   make(chan *payload),
 		register:    make(chan Processor),
 		unregister:  make(chan Processor),
-		subscribe:   make(chan *subscriptionMessage),
-		unsubscribe: make(chan *unsubscriptionMessage),
+		subscribe:   make(chan *SubscriptionMessage),
+		unsubscribe: make(chan *UnsubscriptionMessage),
 		topics:      make(chan *topicOpMessage),
 		done:        make(chan struct{}),
 	}
@@ -127,9 +127,10 @@ func (h *ChannelHub) Subscribe(ctx context.Context, p Processor, topic Topic) er
 		return fmt.Errorf("Processor %v has already subscribed to topic %v", p.GetID(), topic)
 	}
 
-	h.subscribe <- &subscriptionMessage{
-		topic:     topic,
-		processor: p,
+	h.subscribe <- &SubscriptionMessage{
+		BaseMessage: NewBaseMessage(time.Now().Unix(), SUBSCRIPTION_TOPIC),
+		Topic:       topic,
+		Processor:   p,
 	}
 
 	return nil
@@ -147,9 +148,10 @@ func (h *ChannelHub) Unsubscribe(ctx context.Context, p Processor, topic Topic) 
 		return fmt.Errorf("Processor %v has not subscribed to topic %v", p.GetID(), topic)
 	}
 
-	h.unsubscribe <- &unsubscriptionMessage{
-		topic:     topic,
-		processor: p,
+	h.unsubscribe <- &UnsubscriptionMessage{
+		BaseMessage: NewBaseMessage(time.Now().Unix(), UNSUBSCRIPTION_TOPIC),
+		Topic:       topic,
+		Processor:   p,
 	}
 
 	return nil
@@ -163,7 +165,7 @@ func (h *ChannelHub) Publish(ctx context.Context, msg Message) error {
 	}
 
 	if !exists {
-		return fmt.Errorf("The %v topic does not exist", msg.GetTopic())
+		return fmt.Errorf("the %v topic does not exist", msg.GetTopic())
 	}
 	log.Printf("Message published in topic %v", msg.GetTopic())
 	h.broadcast <- &payload{
@@ -187,7 +189,7 @@ func (h *ChannelHub) UnregisterMessageHook(ctx context.Context, hook Processor) 
 func (h *ChannelHub) Close(ctx context.Context) error {
 	processors, err := h.state.ListProcessors(ctx)
 	if err != nil {
-		return fmt.Errorf("Cannot close the hub : %w", err)
+		return fmt.Errorf("cannot close the hub : %w", err)
 	}
 	for _, processor := range processors {
 		h.UnregisterProcessor(ctx, processor)
@@ -217,11 +219,8 @@ func (h *ChannelHub) Run(ctx context.Context, interrupt chan struct{}) error {
 				}
 
 				msg := &DeleteTopicMessage{
-					BaseMessage: BaseMessage{
-						ID:    time.Now().Unix(),
-						Topic: topicOp.topic,
-					},
-					Topic: topicOp.topic,
+					BaseMessage: NewBaseMessage(time.Now().Unix(), topicOp.topic),
+					Topic:       topicOp.topic,
 				}
 
 				for _, processor := range processors {
@@ -265,16 +264,28 @@ func (h *ChannelHub) Run(ctx context.Context, interrupt chan struct{}) error {
 			log.Printf("Unregistered processor %v", unregistration.GetID())
 
 		case subscription := <-h.subscribe:
-			if err := h.state.Subscribe(ctx, subscription.processor, subscription.topic); err != nil {
+			if err := h.state.Subscribe(ctx, subscription.Processor, subscription.Topic); err != nil {
 				return err
 			}
-			log.Printf("Processor %v successfully subscribed to topic %v", subscription.processor.GetID(), subscription.topic)
+			h.broadcast <- &payload{
+				ID:    subscription.GetID(),
+				Topic: SUBSCRIPTION_TOPIC,
+				Type:  subscription.GetType(),
+				Msg:   subscription,
+			}
+			log.Printf("Processor %v successfully subscribed to topic %v", subscription.Processor.GetID(), subscription.Topic)
 
 		case unsubscription := <-h.unsubscribe:
-			if err := h.state.Unsubscribe(ctx, unsubscription.processor, unsubscription.topic); err != nil {
+			if err := h.state.Unsubscribe(ctx, unsubscription.Processor, unsubscription.Topic); err != nil {
 				return err
 			}
-			log.Printf("Processor %v unsubscribed from topic %v", unsubscription.processor.GetID(), unsubscription.topic)
+			h.broadcast <- &payload{
+				ID:    unsubscription.GetID(),
+				Topic: UNSUBSCRIPTION_TOPIC,
+				Type:  unsubscription.GetType(),
+				Msg:   unsubscription,
+			}
+			log.Printf("Processor %v unsubscribed from topic %v", unsubscription.Processor.GetID(), unsubscription.Topic)
 
 		case message := <-h.broadcast:
 			processors, err := h.state.GetSubscribers(ctx, message.Topic)
@@ -282,19 +293,12 @@ func (h *ChannelHub) Run(ctx context.Context, interrupt chan struct{}) error {
 				return err
 			}
 
-			for hook := range h.state.MessageHooks {
-				processors = append(processors, hook)
+			for _, processor := range processors {
+				processor.GetMsgChannel() <- message.Msg
 			}
 
-			for _, processor := range processors {
-				select {
-				case processor.GetMsgChannel() <- message.Msg:
-				default:
-					h.unsubscribe <- &unsubscriptionMessage{
-						topic:     message.Topic,
-						processor: processor,
-					}
-				}
+			for hook := range h.state.MessageHooks {
+				hook.GetMsgChannel() <- message.Msg
 			}
 
 		case <-h.done:
