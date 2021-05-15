@@ -61,7 +61,7 @@ func main() {
 	for i, list := range currentLists {
 		topics[i] = hub.TopicFromString(list.ID.Hex())
 	}
-	storage := hub.NewInMemoryHubStorage()
+	storage := hub.NewStorage()
 	h, err := hub.NewChannelHub(ctx, storage, topics...)
 	if err != nil {
 		log.Fatal(err)

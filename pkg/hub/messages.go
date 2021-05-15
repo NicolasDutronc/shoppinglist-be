@@ -28,18 +28,25 @@ func EncodeJSON(w io.Writer, msg Message) error {
 
 // BaseMessage is an abstract struct for all messages that implements the GetID method of the message interface
 type BaseMessage struct {
-	ID    int64 `json:"-"`
-	Topic Topic `json:"-"`
+	id    int64 `json:"-"`
+	topic Topic `json:"-"`
+}
+
+func NewBaseMessage(id int64, topic Topic) BaseMessage {
+	return BaseMessage{
+		id:    id,
+		topic: topic,
+	}
 }
 
 // GetID returns the id of the message
-func (msg *BaseMessage) GetID() int64 {
-	return msg.ID
+func (msg BaseMessage) GetID() int64 {
+	return msg.id
 }
 
 // GetTopic returns the message topic
-func (msg *BaseMessage) GetTopic() Topic {
-	return msg.Topic
+func (msg BaseMessage) GetTopic() Topic {
+	return msg.topic
 }
 
 // DeleteTopicMessage is a special message that is sent to subscribers when a topic is deleted so they can safely react

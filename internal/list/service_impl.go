@@ -43,11 +43,8 @@ func (s *ServiceImpl) StoreList(ctx context.Context, listName string) (*Shopping
 	}
 
 	if err := s.h.Publish(ctx, &newListMessage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString("lists"),
-		},
-		NewList: list,
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString("lists")),
+		NewList:     list,
 	}); err != nil {
 		return nil, err
 	}
@@ -67,11 +64,8 @@ func (s *ServiceImpl) DeleteList(ctx context.Context, listID string) (int64, err
 	}
 
 	if err := s.h.Publish(ctx, &deleteListMessage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString("lists"),
-		},
-		ListID: listID,
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString("lists")),
+		ListID:      listID,
 	}); err != nil {
 		return -1, err
 	}
@@ -87,13 +81,10 @@ func (s *ServiceImpl) AddItem(ctx context.Context, listID string, itemName strin
 	}
 
 	if err := s.h.Publish(ctx, &addItemMessage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString(listID),
-		},
-		Name:     itemName,
-		Quantity: itemQuantity,
-		Done:     false,
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString(listID)),
+		Name:        itemName,
+		Quantity:    itemQuantity,
+		Done:        false,
 	}); err != nil {
 		return nil, err
 	}
@@ -109,10 +100,7 @@ func (s *ServiceImpl) UpdateItem(ctx context.Context, listID string, itemName st
 	}
 
 	if err := s.h.Publish(ctx, &updateItemMessage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString(listID),
-		},
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString(listID)),
 		Name:        itemName,
 		Quantity:    itemQuantity,
 		NewName:     itemNewName,
@@ -132,13 +120,10 @@ func (s *ServiceImpl) ToggleItem(ctx context.Context, listID string, itemName st
 	}
 
 	if err := s.h.Publish(ctx, &toggleItemMessage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString(listID),
-		},
-		Name:     itemName,
-		Quantity: itemQuantity,
-		Value:    itemDone,
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString(listID)),
+		Name:        itemName,
+		Quantity:    itemQuantity,
+		Value:       itemDone,
 	}); err != nil {
 		return -1, err
 	}
@@ -154,12 +139,9 @@ func (s *ServiceImpl) RemoveItem(ctx context.Context, listID string, itemName st
 	}
 
 	if err := s.h.Publish(ctx, &deleteItemMessage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString(listID),
-		},
-		Name:     itemName,
-		Quantity: itemQuantity,
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString(listID)),
+		Name:        itemName,
+		Quantity:    itemQuantity,
 	}); err != nil {
 		return -1, err
 	}
@@ -175,11 +157,8 @@ func (s *ServiceImpl) RemoveAllItems(ctx context.Context, listID string) (int64,
 	}
 
 	if err := s.h.Publish(ctx, &clearListMesssage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString(listID),
-		},
-		ListID: listID,
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString(listID)),
+		ListID:      listID,
 	}); err != nil {
 		return -1, err
 	}

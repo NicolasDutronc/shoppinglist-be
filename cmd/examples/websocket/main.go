@@ -38,13 +38,10 @@ type mockListItemAdder struct {
 
 func (m *mockListItemAdder) AddItem(ctx context.Context, listID string, name string, quantity string) (*list.Item, error) {
 	if err := m.h.Publish(ctx, &addItemMessage{
-		BaseMessage: hub.BaseMessage{
-			ID:    time.Now().Unix(),
-			Topic: hub.TopicFromString(listID),
-		},
-		Name:     name,
-		Quantity: quantity,
-		Done:     false,
+		BaseMessage: hub.NewBaseMessage(time.Now().Unix(), hub.TopicFromString(listID)),
+		Name:        name,
+		Quantity:    quantity,
+		Done:        false,
 	}); err != nil {
 		return nil, err
 	}
@@ -60,7 +57,7 @@ func main() {
 	// Create an interruption channel
 	quit := make(chan struct{}, 1)
 
-	storage := hub.NewInMemoryHubStorage()
+	storage := hub.NewStorage()
 	h, err := hub.NewChannelHub(ctx, storage, hub.TopicFromString("1"), hub.TopicFromString("2"))
 	if err != nil {
 		panic(err)
