@@ -17,7 +17,7 @@ func (dp *DispatcherProcessor) Process(msg hub.Message) error {
 	if strings.HasPrefix(string(msg.GetTopic()), "_internal") {
 		return nil
 	}
-	return dp.dispatcher.NotifyServers(context.TODO(), msg)
+	return dp.dispatcher.notifyServers(context.TODO(), msg)
 }
 
 func (dp *DispatcherProcessor) GetDoneChannel() <-chan struct{} {
