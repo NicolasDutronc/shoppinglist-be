@@ -20,15 +20,7 @@ type Dispatcher struct {
 }
 
 type HubServerinfo struct {
-	Addresss string
-}
-
-type DispatcherStorage interface {
-	GetSubscribers(ctx context.Context, topic hub.Topic) ([]*HubServerinfo, error)
-
-	Subscribe(ctx context.Context, dispatcher *Dispatcher, topic hub.Topic) error
-
-	Unsubscribe(ctx context.Context, dispatcher *Dispatcher, topic hub.Topic) error
+	Address string
 }
 
 func (d *Dispatcher) notifyServers(ctx context.Context, msg hub.Message) error {
@@ -36,15 +28,16 @@ func (d *Dispatcher) notifyServers(ctx context.Context, msg hub.Message) error {
 		delete(d.foreignerMessages, msg.GetID())
 		return nil
 	}
+
 	subscribers, err := d.storage.GetSubscribers(ctx, msg.GetTopic())
 	if err != nil {
 		return err
 	}
 
-	for _, subscriber := range subscribers {
-		if subscriber.Addresss != d.serverInfo.Addresss {
+	for subscriber := range subscribers {
+		if subscriber.Address != d.serverInfo.Address {
 			if err := d.notifyServer(ctx, msg, subscriber); err != nil {
-				fmt.Printf("Could not notify server %s", subscriber.Addresss)
+				fmt.Printf("Could not notify server %s", subscriber.Address)
 			}
 		}
 	}
@@ -58,16 +51,16 @@ func (d *Dispatcher) notifyServer(ctx context.Context, msg hub.Message, serverIn
 		return err
 	}
 
-	response, err := d.client.Post(serverInfo.Addresss, "application/json", bytes.NewBuffer(jsonValue))
+	response, err := d.client.Post(serverInfo.Address, "application/json", bytes.NewBuffer(jsonValue))
 	if err != nil {
 		return err
 	}
 
 	switch response.StatusCode {
 	case http.StatusInternalServerError:
-		return fmt.Errorf("server %s had an error handling the message", serverInfo.Addresss)
+		return fmt.Errorf("server %s had an error handling the message", serverInfo.Address)
 	case http.StatusBadRequest:
-		return fmt.Errorf("server %s says the request was malformed", serverInfo.Addresss)
+		return fmt.Errorf("server %s says the request was malformed", serverInfo.Address)
 	}
 
 	return nil
@@ -85,6 +78,7 @@ func (d *Dispatcher) MessageHandler() gin.HandlerFunc {
 		}
 
 		d.foreignerMessages[req.Msg.GetID()] = true
+
 		if err := d.hub.Publish(c.Request.Context(), req.Msg); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
