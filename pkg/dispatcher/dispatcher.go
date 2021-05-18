@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/NicolasDutronc/shoppinglist-be/pkg/hub"
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ type Dispatcher struct {
 	hub               hub.Hub
 	foreignerMessages map[int64]bool
 	client            *http.Client
+	mutex             *sync.Mutex
 }
 
 type HubServerinfo struct {
@@ -24,10 +26,12 @@ type HubServerinfo struct {
 }
 
 func (d *Dispatcher) notifyServers(ctx context.Context, msg hub.Message) error {
+	d.mutex.Lock()
 	if d.foreignerMessages[msg.GetID()] {
 		delete(d.foreignerMessages, msg.GetID())
 		return nil
 	}
+	d.mutex.Unlock()
 
 	subscribers, err := d.storage.GetSubscribers(ctx, msg.GetTopic())
 	if err != nil {
@@ -77,7 +81,9 @@ func (d *Dispatcher) MessageHandler() gin.HandlerFunc {
 			return
 		}
 
+		d.mutex.Lock()
 		d.foreignerMessages[req.Msg.GetID()] = true
+		d.mutex.Unlock()
 
 		if err := d.hub.Publish(c.Request.Context(), req.Msg); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
