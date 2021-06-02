@@ -4,13 +4,20 @@ services:
     image: mongo
     container_name: mongodb
     restart: always
+    hostname: mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_REPLICA_SET_NAME: rs0
     volumes:
       - ./services_data/mongodb:/data/db
     ports:
       - 27017-27019:27017-27019
+    healthcheck:
+      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo -u root -p password --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+    command: ["--replSet", "rs0", "--bind_ip_all"]
 
   adminui:
     image: mongo-express
