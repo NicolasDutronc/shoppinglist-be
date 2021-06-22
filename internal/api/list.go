@@ -86,6 +86,52 @@ func FindAllListsHandler(srv list.Finder) gin.HandlerFunc {
 	}
 }
 
+func GetInventoryHandler(srv list.Service) gin.HandlerFunc {
+	type summary struct {
+		ID        string    `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+		Name      string    `json:"name"`
+		Length    int       `json:"int"`
+	}
+
+	type response struct {
+		Lists []*summary `json:"lists"`
+	}
+	return func(c *gin.Context) {
+		lists, err := srv.FindAllLists(c.Request.Context())
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		// get current user
+		currentUser, err := GetCurrentUser(c)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		}
+
+		response := &response{
+			Lists: []*summary{},
+		}
+
+		for _, list := range lists {
+			// if the user has the permission, the list is appended
+			if err := currentUser.Can("read", "list-"+list.ID.Hex()); err == nil {
+				response.Lists = append(response.Lists, &summary{
+					ID:        list.ID.Hex(),
+					CreatedAt: list.CreatedAt,
+					UpdatedAt: list.UpdatedAt,
+					Name:      list.Name,
+					Length:    len(list.Items),
+				})
+			}
+		}
+
+		c.JSON(http.StatusOK, response)
+	}
+}
+
 // DeleteListHandler removes a list based on its id
 func DeleteListHandler(srv list.Deleter) gin.HandlerFunc {
 	return func(c *gin.Context) {

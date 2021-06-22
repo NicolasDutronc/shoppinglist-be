@@ -29,6 +29,7 @@ func SetupRoutes(userSrv user.Service, listSrv list.Service, h hub.Hub) *gin.Eng
 	lists := restricted.Group("/lists")
 	lists.GET("", FindAllListsHandler(listSrv))
 	lists.POST("", StoreListHandler(listSrv))
+	lists.GET("/inventory", GetInventoryHandler(listSrv))
 
 	listI := lists.Group("/:id")
 	listI.GET("", AuthorizationMiddleware("read", "list-:id"), FindListByIDHandler(listSrv))
