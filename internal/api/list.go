@@ -92,11 +92,11 @@ func GetInventoryHandler(srv list.Service) gin.HandlerFunc {
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 		Name      string    `json:"name"`
-		Length    int       `json:"int"`
+		Length    int       `json:"length"`
 	}
 
 	type response struct {
-		Lists []*summary `json:"lists"`
+		Lists []*summary `json:"inventory"`
 	}
 	return func(c *gin.Context) {
 		lists, err := srv.FindAllLists(c.Request.Context())

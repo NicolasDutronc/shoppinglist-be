@@ -55,7 +55,7 @@ func (r *InMemoryRepository) StoreList(ctx context.Context, listName string) (*S
 		return nil, fmt.Errorf("A list already exists with the name %v", listName)
 	}
 
-	return &Shoppinglist{
+	newList := &Shoppinglist{
 		BaseModel: common.BaseModel{
 			ID:        primitive.NewObjectID(),
 			CreatedAt: time.Now(),
@@ -63,7 +63,11 @@ func (r *InMemoryRepository) StoreList(ctx context.Context, listName string) (*S
 		},
 		Items: []*Item{},
 		Name:  listName,
-	}, nil
+	}
+
+	r.lists[newList.ID.Hex()] = newList
+
+	return newList, nil
 }
 
 // DeleteList removes a list
