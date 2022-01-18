@@ -138,7 +138,7 @@ func DeleteListHandler(srv list.Deleter) gin.HandlerFunc {
 		id := c.Param("id")
 		n, err := srv.DeleteList(c.Request.Context(), id)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.AbortWithError(http.StatusNotFound, err)
 			return
 		}
 

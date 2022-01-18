@@ -1,6 +1,8 @@
 package api
 
 import (
+	"time"
+
 	"github.com/NicolasDutronc/shoppinglist-be/internal/list"
 	"github.com/NicolasDutronc/shoppinglist-be/internal/user"
 	"github.com/NicolasDutronc/shoppinglist-be/pkg/hub"
@@ -42,7 +44,7 @@ func SetupRoutes(userSrv user.Service, listSrv list.Service, h hub.Hub) *gin.Eng
 	listI.DELETE("", AuthorizationMiddleware("write", "list-:id"), DeleteListHandler(listSrv))
 
 	hubGroup := restricted.Group("/hub")
-	hubGroup.GET("/connect", hub.SubscribeJSONHandler(h))
+	hubGroup.GET("/connect", hub.WebsocketHandler(h, time.Hour, 1024, time.Hour))
 	hubGroup.POST("/subscribe", hub.SubscriptionHandler(h))
 	hubGroup.POST("/unsubscribe", hub.UnsubscriptionHandler(h))
 

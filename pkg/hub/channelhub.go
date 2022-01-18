@@ -265,27 +265,30 @@ func (h *ChannelHub) Run(ctx context.Context, interrupt chan struct{}) error {
 
 		case subscription := <-h.subscribe:
 			if err := h.state.Subscribe(ctx, subscription.Processor, subscription.Topic); err != nil {
+				log.Printf("error in subscription : %v", err)
 				return err
 			}
+			log.Printf("Processor %v successfully subscribed to topic %v", subscription.Processor.GetID(), subscription.Topic)
+
 			h.broadcast <- &payload{
 				ID:    subscription.GetID(),
 				Topic: SUBSCRIPTION_TOPIC,
 				Type:  subscription.GetType(),
 				Msg:   subscription,
 			}
-			log.Printf("Processor %v successfully subscribed to topic %v", subscription.Processor.GetID(), subscription.Topic)
 
 		case unsubscription := <-h.unsubscribe:
 			if err := h.state.Unsubscribe(ctx, unsubscription.Processor, unsubscription.Topic); err != nil {
 				return err
 			}
+			log.Printf("Processor %v unsubscribed from topic %v", unsubscription.Processor.GetID(), unsubscription.Topic)
+
 			h.broadcast <- &payload{
 				ID:    unsubscription.GetID(),
 				Topic: UNSUBSCRIPTION_TOPIC,
 				Type:  unsubscription.GetType(),
 				Msg:   unsubscription,
 			}
-			log.Printf("Processor %v unsubscribed from topic %v", unsubscription.Processor.GetID(), unsubscription.Topic)
 
 		case message := <-h.broadcast:
 			processors, err := h.state.GetSubscribers(ctx, message.Topic)

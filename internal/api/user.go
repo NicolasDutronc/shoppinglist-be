@@ -224,19 +224,24 @@ func LoginHandler(srv user.Service) gin.HandlerFunc {
 // AuthenticateMiddleware is a http middleware for the authenticate service
 func AuthenticateMiddleware(srv user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
+		var token string
+		authHeader := c.GetHeader("authorization")
 		if authHeader == "" {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("Authorization header was not set"))
-			return
-		}
+			// check if it passed as a query parameter
+			token = c.Query("authorization_token")
+			if token == "" {
+				c.AbortWithError(http.StatusUnauthorized, errors.New("authorization header was not set"))
+				return
+			}
+		} else {
+			headerParts := strings.Split(authHeader, " ")
+			if !(len(headerParts) == 2 && headerParts[0] == "Bearer" && len(headerParts[1]) != 0) {
+				c.AbortWithError(http.StatusUnauthorized, errors.New("authorization header was not set correctly"))
+				return
+			}
 
-		headerParts := strings.Split(authHeader, " ")
-		if !(len(headerParts) == 2 && headerParts[0] == "Bearer" && len(headerParts[1]) != 0) {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("Authorization header was not set correctly"))
-			return
+			token = headerParts[1]
 		}
-
-		token := headerParts[1]
 
 		user, err := srv.Authenticate(c.Request.Context(), token)
 		if err != nil {
